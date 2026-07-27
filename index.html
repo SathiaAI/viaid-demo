@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VIA ID — live demo</title>
+<style>
+  :root{
+    --ink:#14171A; --paper:#FBFAF8; --panel:#fff; --line:#E7E3DC; --muted:#6B6560;
+    --accent:#2C6E6A; --pass:#157F4E; --refuse:#B23A2E; --caution:#B7791F;
+    --mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--muted);max-width:60ch}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--pass);font-weight:600;margin-top:10px}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--pass);animation:p 1.6s infinite}
+  @keyframes p{0%,100%{opacity:.35}50%{opacity:1}}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .col h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 12px}
+  .steps{display:flex;flex-direction:column;gap:10px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;transition:.2s}
+  .step .n{flex:0 0 26px;height:26px;border-radius:50%;background:#F1EEE8;color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+  .step.done .n{background:var(--accent);color:#fff}
+  .step.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(44,110,106,.1)}
+  .step .body{flex:1}
+  .step .t{font-weight:600;font-size:15px}
+  .step .d{font-size:13px;color:var(--muted);margin-top:2px}
+  button{font-family:var(--sans);cursor:pointer;border:none;border-radius:9px;font-weight:600;font-size:14px}
+  .go{background:var(--ink);color:#fff;padding:9px 14px;margin-top:8px}
+  .go:disabled{opacity:.4;cursor:default}
+  .go.secondary{background:#F1EEE8;color:var(--ink)}
+  .runall{background:var(--accent);color:#fff;padding:11px 18px;font-size:15px}
+  .reset{background:none;color:var(--muted);text-decoration:underline;padding:6px 0;font-weight:500}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:sticky;top:20px}
+  .card .hd{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  .verdict-dot{width:12px;height:12px;border-radius:50%;background:#CFC9C0}
+  .verdict{font-size:22px;font-weight:700}
+  .tier{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:#F1EEE8;color:var(--muted);padding:5px 9px;border-radius:999px}
+  .card .bd{padding:16px 18px}
+  .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px}
+  .row{margin-bottom:14px}
+  .mono{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+  .chip{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;margin:2px 3px 2px 0;font-weight:600}
+  .chip.green{background:#E7F3EC;color:var(--pass)}.chip.grey{background:#F1EEE8;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td{padding:6px 4px;border-bottom:1px solid #F1EEE8;vertical-align:top}
+  .ok{color:var(--pass);font-weight:600}.bad{color:var(--refuse);font-weight:600}
+  .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding:6px 12px;margin-top:10px;background:#F8F6F2}
+  .console{font-family:var(--mono);font-size:12px;background:#14171A;color:#D6D2C8;border-radius:12px;padding:14px 16px;margin-top:22px;max-height:230px;overflow:auto;white-space:pre-wrap;line-height:1.6}
+  .console .cok{color:#7FCBA0}.console .cbad{color:#E39B8F}.console .cdim{color:#8A8579}
+  .foot{margin-top:26px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+  .foot b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">VIA ID · the security desk for AI agents</div>
+    <h1>Watch an agent get a badge — then get refused.</h1>
+    <p class="sub">Every AI agent gets a small signed <b>badge</b> that travels with it: who made it, what it's allowed to do, and a tamper-evident record of what it did. Below, walk the whole lifecycle. The badge's identity and signatures are generated and checked <b>live in your browser</b> — this isn't a mockup.</p>
+    <div class="live"><span class="dot"></span>Live Ed25519 · nothing is faked</div>
+  </header>
+
+  <div style="margin-bottom:22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <button class="runall" id="runall">▶ Play the whole story</button>
+    <button class="reset" id="reset">reset</button>
+  </div>
+
+  <div class="grid">
+    <div class="col">
+      <h2>The story</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="col">
+      <h2>The public verify page — viaid.ai/a/&lt;id&gt;</h2>
+      <div class="card" id="card">
+        <div class="hd">
+          <span class="verdict-dot" id="vdot"></span>
+          <span class="verdict" id="verdict" style="color:var(--muted)">— no badge yet —</span>
+          <span class="tier" id="tier">tier: —</span>
+        </div>
+        <div class="bd" id="cardbody">
+          <p style="color:var(--muted);font-size:14px;margin:6px 0">Run step 1 to mint a badge and this becomes its live, shareable verify page.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="console" id="console"><span class="cdim">console — the real values as they happen</span></div>
+
+  <div class="foot">
+    <b>What's live vs. shown:</b> the 3-key identity, signatures, the tamper-evident log hash-chain, verify, and revoke all run live in your browser with real Ed25519 + SHA-256. The <b>GraphSmith evaluation</b> (the evidence a badge stands on) and the <b>org gate</b> run server-side in the real product; here they're shown from a real captured run.<br><br>
+    <b>Claim discipline:</b> the record is <b>tamper-evident</b> — if it's changed, it shows (never "tamper-proof"). <b>Kill = revoke + the gate refuses it next time</b> — not a remote shutdown. A badge is <b>evidence, not a safety or compliance guarantee.</b>
+  </div>
+</div>
+
+<script>
+// ---------- crypto helpers (real WebCrypto) ----------
+const enc = (s)=>new TextEncoder().encode(s);
+const b64 = (buf)=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = (s)=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const hex = (buf)=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+async function sha256hex(str){ return hex(await crypto.subtle.digest('SHA-256', enc(str))); }
+async function genKey(){ return crypto.subtle.generateKey({name:'Ed25519'}, true, ['sign','verify']); }
+async function pub(k){ return b64(await crypto.subtle.exportKey('spki', k)); }
+async function signB64(priv,msg){ return b64(await crypto.subtle.sign({name:'Ed25519'}, priv, enc(msg))); }
+async function verifyB64(pubB64,msg,sigB64){
+  try{ const key=await crypto.subtle.importKey('spki',unb64(pubB64),{name:'Ed25519'},true,['verify']);
+    return crypto.subtle.verify({name:'Ed25519'}, key, unb64(sigB64), enc(msg)); }catch(e){return false;}
+}
+function canonical(o){
+  if(o===null||typeof o!=='object')return JSON.stringify(o);
+  if(Array.isArray(o))return '['+o.map(canonical).join(',')+']';
+  return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+canonical(o[k])).join(',')+'}';
+}
+// ---------- badge core (mirrors the real prototype's agentid.mjs) ----------
+let badge=null, keys=null;
+function coreForSigning(b){ const {signatures,...core}=b; return canonical(core); }
+async function resign(){
+  const msg=coreForSigning(badge);
+  badge.signatures={ owner_sig:await signB64(keys.owner.priv,msg), agent_sig:await signB64(keys.agent.priv,msg), voucher_sig:await signB64(keys.voucher.priv,msg) };
+}
+async function mint(name){
+  const g=async()=>{const kp=await genKey();return {priv:kp.privateKey, pub:await pub(kp.publicKey)};};
+  const owner=await g(), agent=await g(), voucher=await g(), next=await g();
+  keys={owner,agent,voucher};
+  const inception={ schema:'viaid.badge/0.1', name, owner_id:'demo-dev',
+    owner_pub:owner.pub, agent_pub:agent.pub, voucher_pub:voucher.pub,
+    next_key_commitment:await sha256hex(next.pub), key_seq:0 };
+  const agent_id='via_'+(await sha256hex(canonical(inception))).slice(0,32);
+  badge={ schema:'viaid.badge/0.1', agent_id, inception,
+    keys:{owner_pub:owner.pub,agent_pub:agent.pub,voucher_pub:voucher.pub},
+    assurance_tier:'SELF', revocation_state:'FRESH', evidence:null, log:[] };
+  await resign();
+}
+async function appendLog(action){
+  const prev = badge.log.length ? badge.log[badge.log.length-1].entry_hash : 'GENESIS';
+  const body={ seq:badge.log.length, action, prev_hash:prev };
+  body.entry_hash = await sha256hex(prev+'\n'+canonical(body));
+  const {entry_hash,...rest}=body; badge.log.push({...rest, entry_hash});
+  await resign();
+}
+async function attachEvidence(){
+  badge.evidence={ engine:'graphsmith verify', status:'PASS',
+    confirmed:['R','B','G'], unavailable:['E','T','Q','X'],
+    note:'GraphSmith evidence is tested, not certified — a PASS records what the run produced and that the record is unaltered, not that the agent is safe/correct/compliant.' };
+  await resign();
+}
+async function verify(){
+  const steps=[]; const push=(s,ok,d)=>steps.push({s,ok,d});
+  const inc=badge.inception;
+  const rid='via_'+(await sha256hex(canonical(inc))).slice(0,32);
+  push('agent_id = hash(inception)', rid===badge.agent_id, rid);
+  const bound = badge.keys.owner_pub===inc.owner_pub && badge.keys.agent_pub===inc.agent_pub && badge.keys.voucher_pub===inc.voucher_pub;
+  push('keys bound to the identity hash', bound, bound?'':'keys do not match inception');
+  const msg=coreForSigning(badge);
+  const o=await verifyB64(inc.owner_pub,msg,badge.signatures.owner_sig);
+  const a=await verifyB64(inc.agent_pub,msg,badge.signatures.agent_sig);
+  const v=await verifyB64(inc.voucher_pub,msg,badge.signatures.voucher_sig);
+  push('owner signature',o,''); push('agent signature',a,''); push('VIA ID voucher signature',v,'');
+  let chain=true, prev='GENESIS';
+  for(const e of badge.log){ const {entry_hash,...b}=e; const exp=await sha256hex(prev+'\n'+canonical(b));
+    if(exp!==entry_hash||b.prev_hash!==prev){chain=false;break;} prev=entry_hash; }
+  push('log hash-chain intact', chain, badge.log.length+' entries');
+  const live = badge.revocation_state==='FRESH';
+  push('revocation state = FRESH', live, badge.revocation_state);
+  const sigOk=bound&&o&&a&&v;
+  const structural = rid===badge.agent_id && sigOk && chain;
+  const verdict = !structural?'INVALID':(live?'VALID':'REVOKED');
+  return {verdict, steps, live, structural};
+}
+async function gate(){ // faithful "desk" behaviour: a live/valid badge gets a pass; a revoked one is refused
+  const v=await verify();
+  if(v.verdict==='VALID'){ const r='rcpt_'+(await sha256hex('receipt'+Date.now()+badge.agent_id)).slice(0,20);
+    return {code:'ALLOW', receipt:r}; }
+  return {code:'DENY_IDENTITY', receipt:null};
+}
+
+// ---------- UI ----------
+const C=document.getElementById('console');
+function logc(msg,cls){ const span=document.createElement('div'); if(cls)span.className=cls; span.textContent=msg; C.appendChild(span); C.scrollTop=C.scrollHeight; }
+const STEPS=[
+  {t:'Mint the AgentID', d:'A developer creates a badge for their agent — 3 signing keys + an identity that is the hash of its birth certificate.', run:async()=>{
+    await mint('acme-ops-agent'); logc('✔ minted '+badge.agent_id,'cok'); logc('  identity = SHA-256 of the inception event (immutable across key rotation)','cdim'); }},
+  {t:'Record what it does', d:'Every action appends to a tamper-evident, hash-chained log.', run:async()=>{
+    await appendLog('deployed'); await appendLog('called the payments API'); logc('✔ 2 log entries appended, each hash-chained to the last','cok'); }},
+  {t:'Attach the evaluation', d:'GraphSmith evaluates the agent; a PASS with confirmed capabilities becomes the evidence the badge stands on.', run:async()=>{
+    await attachEvidence(); logc('✔ GraphSmith eval attached: PASS · confirmed [R, B, G]','cok'); logc('  unavailable [E, T, Q, X] — shown grey, never green','cdim'); }},
+  {t:'Verify the badge', d:'Anyone can check it — identity, signatures, log integrity, revocation — and get an honest verdict.', run:async()=>{
+    const v=await verify(); logc('✔ verify → '+v.verdict+' (all checks pass)','cok'); }},
+  {t:'Arrive at an org → get a visitor pass', d:'A company treats the agent like a visitor: checks the badge, then grants a scoped pass and records a receipt.', run:async()=>{
+    const g=await gate(); logc('✔ desk gate → '+g.code+'  receipt='+g.receipt,'cok'); }},
+  {t:'Kill it', d:'The org revokes the badge. Kill = revoke + the gate refuses it next time (not a remote shutdown).', run:async()=>{
+    badge.revocation_state='REVOKED'; await resign(); const g=await gate();
+    logc('✔ badge revoked → gate now returns '+g.code,'cbad'); logc('  the desk refuses every future request','cdim'); }},
+  {t:'Bonus: try to tamper', d:'Silently edit a past log entry and re-check — the record shows it.', run:async()=>{
+    if(!badge.log.length){logc('  (mint + record first)','cdim');return;}
+    badge.log[0].action='deleted the production database';
+    const v=await verify(); logc('✔ tampered a log entry → verify = '+v.verdict+' (tamper-evident: the change shows)','cbad'); }},
+];
+let active=0;
+const stepsEl=document.getElementById('steps');
+function renderSteps(){
+  stepsEl.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const el=document.createElement('div'); el.className='step'+(s.done?' done':'')+(i===active?' active':'');
+    el.innerHTML=`<div class="n">${s.done?'✓':i+1}</div><div class="body"><div class="t">${s.t}</div><div class="d">${s.d}</div></div>`;
+    const btn=document.createElement('button'); btn.className='go'+(i>active?' secondary':''); btn.textContent=s.done?'run again':'run this step';
+    btn.onclick=()=>doStep(i); el.querySelector('.body').appendChild(btn);
+    stepsEl.appendChild(el);
+  });
+}
+async function doStep(i){
+  await STEPS[i].run(); STEPS[i].done=true; active=Math.min(i+1,STEPS.length-1);
+  renderSteps(); await renderCard();
+}
+async function renderCard(){
+  if(!badge)return;
+  const v=await verify();
+  const col={VALID:'var(--pass)',REVOKED:'var(--refuse)',INVALID:'var(--refuse)'}[v.verdict]||'var(--caution)';
+  document.getElementById('vdot').style.background=col;
+  const vd=document.getElementById('verdict'); vd.textContent=v.verdict; vd.style.color=col;
+  document.getElementById('tier').textContent='tier: '+badge.assurance_tier;
+  const ev=badge.evidence;
+  const steps=v.steps.map(s=>`<tr><td>${s.s}</td><td class="${s.ok?'ok':'bad'}">${s.ok?'PASS':'FAIL'}</td><td class="mono" style="color:var(--muted)">${(s.d||'').slice(0,26)}</td></tr>`).join('');
+  const logrows = badge.log.map(e=>`<tr><td>${e.seq}</td><td>${e.action}</td><td class="mono" style="color:var(--muted)">${e.entry_hash.slice(0,14)}…</td></tr>`).join('') || '<tr><td colspan=3 style="color:var(--muted)">no entries</td></tr>';
+  document.getElementById('cardbody').innerHTML = `
+    <div class="row"><div class="k">Agent ID</div><div class="mono">${badge.agent_id}</div></div>
+    <div class="row"><div class="k">Coverage</div><div style="font-size:14px">${ev?('GraphSmith eval: '+ev.status):'identity + log only (no evaluation yet)'}</div></div>
+    ${ev?`<div class="row"><div class="k">Confirmed</div>${ev.confirmed.map(c=>`<span class="chip green">${c}</span>`).join('')}
+      <div class="k" style="margin-top:8px">Unavailable — grey, never green</div>${ev.unavailable.map(c=>`<span class="chip grey">${c}</span>`).join('')}</div>`:''}
+    <div class="row"><div class="k">Verification</div><table><tbody>${steps}</tbody></table></div>
+    <div class="row"><div class="k">Tamper-evident log</div><table><tbody>${logrows}</tbody></table></div>
+    <div class="note">${ev?ev.note:'This verdict attests identity, signatures and log integrity — not the safety, correctness, or compliance of the agent.'}</div>`;
+}
+async function runAll(){
+  reset(); document.getElementById('runall').disabled=true;
+  for(let i=0;i<STEPS.length;i++){ await doStep(i); await new Promise(r=>setTimeout(r,650)); }
+  document.getElementById('runall').disabled=false;
+}
+function reset(){ badge=null; keys=null; STEPS.forEach(s=>s.done=false); active=0;
+  C.innerHTML='<span class="cdim">console — the real values as they happen</span>';
+  document.getElementById('verdict').textContent='— no badge yet —'; document.getElementById('verdict').style.color='var(--muted)';
+  document.getElementById('vdot').style.background='#CFC9C0'; document.getElementById('tier').textContent='tier: —';
+  document.getElementById('cardbody').innerHTML='<p style="color:var(--muted);font-size:14px;margin:6px 0">Run step 1 to mint a badge and this becomes its live, shareable verify page.</p>';
+  renderSteps();
+}
+document.getElementById('runall').onclick=runAll;
+document.getElementById('reset').onclick=reset;
+renderSteps();
+if(!crypto.subtle || !crypto.subtle.generateKey){ logc('⚠ This browser lacks WebCrypto Ed25519 — use a recent Chrome/Edge/Safari.','cbad'); }
+</script>
+</body>
+</html>
